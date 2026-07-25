@@ -7,8 +7,6 @@ import pygame
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SOUNDS_DIR = PROJECT_ROOT / "sounds"
 
-
-
 class Game:
     def __init__(self):
         self.grid = Grid()
@@ -17,6 +15,8 @@ class Game:
         self.next_block = self.get_random_block()
         self.game_over = False
         self.score = 0
+        self.held_block = None
+        self.can_hold = True
         self.rotate_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_rotate.ogg")
         self.clear_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_clear.ogg")
 
@@ -66,18 +66,67 @@ class Game:
 
     def lock_block(self):
         tiles = self.current_block.get_cell_positions()
+
         for position in tiles:
             self.grid.grid[position.row][position.col] = self.current_block.id
+
         self.current_block = self.next_block
+        self.current_block.reset_position()
+
         self.next_block = self.get_random_block()
+
+        # Allow holding again for the new piece
+        self.can_hold = True
+
         rows_cleared = self.grid.clear_full_rows()
+
         if rows_cleared > 0:
             self.clear_sound.play()
             self.update_score(rows_cleared, 0)
+
         if self.block_fits() == False:
             self.game_over = True
+
+    def hard_drop(self):
+        while True:
+
+            self.current_block.move(1, 0)
+
+            if not self.block_inside() or not self.block_fits():
+                self.current_block.move(-1, 0)
+                break
+
+        self.lock_block()
+
+    def hold_piece(self):
+
+        # Prevent holding multiple times per piece
+        if self.can_hold == False:
+            return
+
+        self.can_hold = False
+
+        # If there is nothing in hold
+        if self.held_block is None:
+
+            self.held_block = self.current_block
+
+            self.current_block = self.next_block
+            self.next_block = self.get_random_block()
+
+        else:
+            # Swap current and held pieces
+            temp = self.current_block
+
+            self.current_block = self.held_block
+
+            self.held_block = temp
+
+        # Reset the new current piece
+        self.current_block.reset_position()
         
 
+        
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
@@ -100,12 +149,20 @@ class Game:
         self.score = 0
 
     def draw(self, screen):
-            self.grid.draw(screen)
-            self.current_block.draw(screen, 11, 11)
-            if self.next_block.id == 3:
-                self.next_block.draw(screen, 255, 290)
-            elif self.next_block.id == 4:
-                self.next_block.draw(screen, 255, 280)
-            else:
-                self.next_block.draw(screen, 270, 270)
+        self.grid.draw(screen)
+
+        # Draw current falling block
+        self.current_block.draw(screen, 11, 11)
+
+        # Draw next block preview
+        if self.next_block.id == 3:
+            self.next_block.draw(screen, 255, 290)
+        elif self.next_block.id == 4:
+            self.next_block.draw(screen, 255, 280)
+        else:
+            self.next_block.draw(screen, 270, 270)
+
+        # Draw held block preview
+        if self.held_block:
+            self.held_block.draw_preview(screen, 350, 440)
 

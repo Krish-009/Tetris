@@ -31,11 +31,34 @@ class Block:
 
     def undo_rotation(self):
         self.rotation_state -= 1
-        if self.rotation_state == 0:
+        if self.rotation_state < 0:
             self.rotation_state = len(self.cells) - 1
+
+    def reset_position(self):
+        self.row_offset = 0
+        self.col_offset = 3
+        self.rotation_state = 0
+
+    def draw_preview(self, screen, offset_x, offset_y):
+        tiles = self.cells[self.rotation_state]
+
+        for tile in tiles:
+            tile_rect = pygame.Rect(
+                offset_x + tile.col * self.cell_size,
+                offset_y + tile.row * self.cell_size,
+                self.cell_size - 1,
+                self.cell_size - 1
+            )
+
+            pygame.draw.rect(screen, self.colors[self.id], tile_rect)
 
     def draw(self, screen, offset_x, offset_y):
         tiles = self.get_cell_positions()
         for tile in tiles:
-            tile_rect = pygame.Rect(offset_x + tile.col * self.cell_size, offset_y + tile.row * self.cell_size, self.cell_size - 1, self.cell_size - 1)
+            tile_rect = pygame.Rect(
+                offset_x + tile.col * self.cell_size, 
+                offset_y + tile.row * self.cell_size, 
+                self.cell_size - 1, 
+                self.cell_size - 1
+            )
             pygame.draw.rect(screen, self.colors[self.id], tile_rect)

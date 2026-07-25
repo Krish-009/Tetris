@@ -25,7 +25,7 @@ class Input_Manager:
         self.last_left_move = 0
         self.last_right_move = 0
 
-        self.action = []
+        self.actions = []
 
     def process_event(self, event):
 
@@ -35,7 +35,7 @@ class Input_Manager:
             if event.key == pygame.K_LEFT:
                 self.left_held = True
 
-                self.action.append(Action.MOVE_LEFT)
+                self.actions.append(Action.MOVE_LEFT)
 
                 current_time = pygame.time.get_ticks()
                 self.left_start_time = current_time
@@ -45,7 +45,7 @@ class Input_Manager:
             elif event.key == pygame.K_RIGHT:
                 self.right_held = True
 
-                self.action.append(Action.MOVE_RIGHT)
+                self.actions.append(Action.MOVE_RIGHT)
 
                 current_time = pygame.time.get_ticks()
                 self.right_start_time = current_time
@@ -57,19 +57,19 @@ class Input_Manager:
 
             # Rotation
             elif event.key == pygame.K_UP:
-                self.action.append(Action.ROTATE)
+                self.actions.append(Action.ROTATE)
 
             # Hard Drop
             elif event.key == pygame.K_SPACE:
-                self.action.append(Action.HARD_DROP)
+                self.actions.append(Action.HARD_DROP)
 
             # Hold
             elif event.key == pygame.K_c:
-                self.action.append(Action.HOLD)
+                self.actions.append(Action.HOLD)
 
             # Pause
             elif event.key == pygame.K_ESCAPE:
-                self.action.append(Action.PAUSE)
+                self.actions.append(Action.PAUSE)
 
         elif event.type == pygame.KEYUP:
 
