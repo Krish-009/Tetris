@@ -16,8 +16,6 @@ screen = pygame.display.set_mode((500, 620))
 pygame.display.set_caption("Tetris")
 clock = pygame.time.Clock()
 
-
-
 game = Game()
 
 GAME_UPDATE = pygame.USEREVENT
