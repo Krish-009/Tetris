@@ -27,9 +27,11 @@ hold_surface = title_font.render("Hold", True, Colors.white)
 
 
 # UI Layout
-score_rect = pygame.Rect(320, 55, 170, 60)
-next_rect = pygame.Rect(320, 215, 170, 180)
-hold_rect = pygame.Rect(320, 400, 170, 180)
+score_rect = pygame.Rect(320, 50, 170, 60)
+next_rect = pygame.Rect(320, 160, 170, 180)
+hold_rect = pygame.Rect(320, 390, 170, 180)
+
+pygame.Rect()
 
 
 # Timers
@@ -91,8 +93,8 @@ while True:
 
     screen.fill(Colors.dark_blue)
     screen.blit(score_surface, (365, 20, 50, 50))
-    screen.blit(next_surface, (375, 180, 50, 50))
-    screen.blit(hold_surface, (375, 350))
+    screen.blit(next_surface, (375, 130, 50, 50))
+    screen.blit(hold_surface, (375, 360, 50, 50))
 
     if game.game_over == True:
         screen.blit(game_over_surface, (330, 450, 50, 50))

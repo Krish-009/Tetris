@@ -56,6 +56,13 @@ class Game:
         if self.block_inside() == False or self.block_fits() == False:
             self.current_block.move(-1, 0)
             self.lock_block()
+            print(
+                self.next_block.id,
+                self.next_block.row_offset,
+                self.next_block.col_offset,
+                self.next_block.rotation_state
+            )
+        
             
     def rotate(self):
         self.current_block.rotate()
@@ -110,22 +117,28 @@ class Game:
         if self.held_block is None:
 
             self.held_block = self.current_block
-
+            self.held_block.reset_position()
             self.current_block = self.next_block
             self.next_block = self.get_random_block()
 
         else:
             # Swap current and held pieces
             temp = self.current_block
-
+            
             self.current_block = self.held_block
 
             self.held_block = temp
+            self.held_block.reset_position()
+            
 
         # Reset the new current piece
         self.current_block.reset_position()
-        
-
+        print(
+            self.held_block.id,
+            self.held_block.row_offset,
+            self.held_block.col_offset,
+            self.held_block.rotation_state
+        )
         
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
@@ -156,13 +169,19 @@ class Game:
 
         # Draw next block preview
         if self.next_block.id == 3:
-            self.next_block.draw(screen, 255, 290)
+            self.next_block.draw(screen, 255, 240)
         elif self.next_block.id == 4:
-            self.next_block.draw(screen, 255, 280)
+            self.next_block.draw(screen, 255, 230)
         else:
-            self.next_block.draw(screen, 270, 270)
+            self.next_block.draw(screen, 270, 220)
 
         # Draw held block preview
-        if self.held_block:
-            self.held_block.draw_preview(screen, 350, 440)
+        if self.held_block is not None:
+        
+            if self.held_block.id == 3:
+                self.held_block.draw_preview(screen, 345, 440)
+            elif self.held_block.id == 4:
+                self.held_block.draw_preview(screen, 376, 450)
+            else:
+                self.held_block.draw_preview(screen, 360, 450)
 
