@@ -87,6 +87,9 @@ while True:
         elif action == Action.HOLD:
             game.hold_piece()
 
+        elif action == Action.HARD_DROP:
+            game.hard_drop()
+
 
     # Render
     score_val_surface = title_font.render(str(game.score), True, Colors.white)     
@@ -106,6 +109,7 @@ while True:
     pygame.draw.rect(screen, Colors.light_blue, hold_rect, 0, 10)
     game.draw(screen)
 
+    game.update_effects()
     pygame.display.update()
     clock.tick(60)
 

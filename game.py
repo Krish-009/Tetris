@@ -1,6 +1,7 @@
 from grid import Grid
 from pathlib import Path
 from blockTypes import *
+from hardDropEffect import HardDropEffect
 import random
 import pygame
 
@@ -17,6 +18,7 @@ class Game:
         self.score = 0
         self.held_block = None
         self.can_hold = True
+        self.hard_drop_effects = []
         self.rotate_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_rotate.ogg")
         self.clear_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_clear.ogg")
 
@@ -94,14 +96,43 @@ class Game:
         if self.block_fits() == False:
             self.game_over = True
 
+    def update_effects(self):
+
+        for effect in self.hard_drop_effects:
+            effect.update()
+
+        self.hard_drop_effects = [
+            e for e in self.hard_drop_effects
+            if e.alive()
+        ]
+
     def hard_drop(self):
+
+        start_tiles = self.current_block.get_cell_positions()
+
+        distance = 0
+
         while True:
 
-            self.current_block.move(1, 0)
+            self.current_block.move(1,0)
 
             if not self.block_inside() or not self.block_fits():
-                self.current_block.move(-1, 0)
+                self.current_block.move(-1,0)
                 break
+
+            distance += 1
+
+        end_tiles = self.current_block.get_cell_positions()
+
+        self.hard_drop_effects.append(
+            HardDropEffect(
+                self.current_block,
+                start_tiles,
+                end_tiles
+            )
+        )
+
+        self.update_score(0, distance * 2)
 
         self.lock_block()
 
@@ -139,7 +170,7 @@ class Game:
             self.held_block.col_offset,
             self.held_block.rotation_state
         )
-        
+
     def block_fits(self):
         tiles = self.current_block.get_cell_positions()
         for tile in tiles:
@@ -161,8 +192,41 @@ class Game:
         self.next_block = self.get_random_block()
         self.score = 0
 
+    def get_ghost_block(self):
+        ghost = self.current_block.copy()
+
+        while True:
+            ghost.move(1, 0)
+
+            tiles = ghost.get_cell_positions()
+
+            valid = True
+
+            for tile in tiles:
+                if not self.grid.is_inside(tile.row, tile.col):
+                    valid = False
+                    break
+
+                if not self.grid.is_empty(tile.row, tile.col):
+                    valid = False
+                    break
+
+            if not valid:
+                ghost.move(-1, 0)
+                break
+
+        return ghost
+
     def draw(self, screen):
+
         self.grid.draw(screen)
+        
+        for effect in self.hard_drop_effects:
+            effect.draw(screen, 11, 11)
+
+        # Draw ghost block
+        ghost = self.get_ghost_block()
+        ghost.draw_ghost(screen, 11, 11)
 
         # Draw current falling block
         self.current_block.draw(screen, 11, 11)
@@ -181,7 +245,7 @@ class Game:
             if self.held_block.id == 3:
                 self.held_block.draw_preview(screen, 345, 440)
             elif self.held_block.id == 4:
-                self.held_block.draw_preview(screen, 376, 450)
+                self.held_block.draw_preview(screen, 375, 450)
             else:
                 self.held_block.draw_preview(screen, 360, 450)
 
