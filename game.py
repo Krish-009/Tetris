@@ -20,6 +20,13 @@ class Game:
         self.held_block = None
         self.can_hold = True
         self.hard_drop_effects = []
+        self.lock_delay = 500
+        self.lock_timer = 0
+        self.is_grounded = False
+        self.lock_reset_count = 0
+        self.max_lock_resets = 15
+        self.grounded_time_total = 0       # NEW
+        self.max_grounded_time = 5000      # NEW: hard cap, e.g. 5s
         self.rotate_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_rotate.ogg")
         self.clear_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_clear.ogg")
 
@@ -48,23 +55,30 @@ class Game:
         if self.block_inside() == False or self.block_fits() == False:
             self.current_block.move(0, 1)
 
+        else:
+            self.reset_lock_delay()
+
 
     def move_right(self):
         self.current_block.move(0, 1)
         if self.block_inside() == False or self.block_fits() == False:
             self.current_block.move(0, -1)
 
+        else:
+            self.reset_lock_delay()
+
     def move_down(self):
         self.current_block.move(1, 0)
+
         if self.block_inside() == False or self.block_fits() == False:
             self.current_block.move(-1, 0)
-            self.lock_block()
-            print(
-                self.next_block.id,
-                self.next_block.row_offset,
-                self.next_block.col_offset,
-                self.next_block.rotation_state
-            )
+            self.is_grounded = True
+
+        else:
+            self.is_grounded = False
+            self.lock_timer = 0
+            self.lock_reset_count = 0
+            self.grounded_time_total = 0
         
             
     def rotate(self):
@@ -84,16 +98,21 @@ class Game:
             self.current_block.move(row_offset, col_offset)
             if self.block_inside() and self.block_fits():
                 self.rotate_sound.play()
+                self.reset_lock_delay()
                 return
 
             # Undo this kick and try the next one
             self.current_block.move(-row_offset, -col_offset)
+
 
         # No kick worked, undo the rotation
         self.current_block.undo_rotation()
 
     def lock_block(self):
         tiles = self.current_block.get_cell_positions()
+        self.is_grounded = False
+        self.lock_timer = 0
+        self.lock_reset_count = 0
 
         for position in tiles:
             self.grid.grid[position.row][position.col] = self.current_block.id
@@ -114,6 +133,11 @@ class Game:
 
         if self.block_fits() == False:
             self.game_over = True
+
+    def reset_lock_delay(self):
+        if self.is_grounded and self.lock_reset_count < self.max_lock_resets:
+            self.lock_timer = 0
+            self.lock_reset_count += 1
 
     def update_effects(self):
 
@@ -235,6 +259,17 @@ class Game:
                 break
 
         return ghost
+
+    def update(self, dt):
+
+        self.update_effects()
+
+        # Only run lock delay if touching the ground
+        if self.is_grounded:
+            self.lock_timer += dt
+            self.grounded_time_total += dt
+            if self.lock_timer >= self.lock_delay or self.grounded_time_total >= self.max_grounded_time:
+                self.lock_block()
 
     def draw(self, screen):
 
