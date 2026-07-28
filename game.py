@@ -2,6 +2,7 @@ from grid import Grid
 from pathlib import Path
 from blockTypes import *
 from hardDropEffect import HardDropEffect
+from srs import get_wall_kicks
 import random
 import pygame
 
@@ -67,11 +68,29 @@ class Game:
         
             
     def rotate(self):
+
+        old_state = self.current_block.rotation_state
         self.current_block.rotate()
-        if self.block_inside() == False or self.block_fits() == False:
-            self.current_block.undo_rotation()
-        else:
-            self.rotate_sound.play()
+        new_state = self.current_block.rotation_state
+
+        kicks = get_wall_kicks(
+            self.current_block.id,
+            old_state,
+            new_state
+        )
+
+        for row_offset, col_offset in kicks:
+
+            self.current_block.move(row_offset, col_offset)
+            if self.block_inside() and self.block_fits():
+                self.rotate_sound.play()
+                return
+
+            # Undo this kick and try the next one
+            self.current_block.move(-row_offset, -col_offset)
+
+        # No kick worked, undo the rotation
+        self.current_block.undo_rotation()
 
     def lock_block(self):
         tiles = self.current_block.get_cell_positions()
