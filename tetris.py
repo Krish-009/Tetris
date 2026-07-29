@@ -57,7 +57,7 @@ while True:
         input_manager.process_event(event)
 
         # Gravity
-        if event.type == GAME_UPDATE and not game.game_over:
+        if event.type == GAME_UPDATE and not game.game_over and not game.grid.is_clearing:
             game.move_down()
 
 
@@ -68,7 +68,7 @@ while True:
 
     for action in actions:
 
-        if game.game_over:
+        if game.game_over or game.grid.is_clearing:
             continue
 
         if action == Action.MOVE_LEFT:

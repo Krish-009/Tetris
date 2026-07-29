@@ -25,8 +25,8 @@ class Game:
         self.is_grounded = False
         self.lock_reset_count = 0
         self.max_lock_resets = 15
-        self.grounded_time_total = 0       # NEW
-        self.max_grounded_time = 5000      # NEW: hard cap, e.g. 5s
+        self.grounded_time_total = 0
+        self.max_grounded_time = 5000
         self.rotate_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_rotate.ogg")
         self.clear_sound = pygame.mixer.Sound(SOUNDS_DIR / "Sounds_clear.ogg")
 
@@ -40,6 +40,8 @@ class Game:
             self.score += 300
         elif lines_cleared == 3:
             self.score += 500
+        elif lines_cleared == 4:
+            self.score += 800
         self.score += move_down_points
         
 
@@ -101,11 +103,8 @@ class Game:
                 self.reset_lock_delay()
                 return
 
-            # Undo this kick and try the next one
             self.current_block.move(-row_offset, -col_offset)
 
-
-        # No kick worked, undo the rotation
         self.current_block.undo_rotation()
 
     def lock_block(self):
@@ -117,22 +116,21 @@ class Game:
         for position in tiles:
             self.grid.grid[position.row][position.col] = self.current_block.id
 
+        full_rows = self.grid.get_full_rows()
+
         self.current_block = self.next_block
         self.current_block.reset_position()
 
         self.next_block = self.get_random_block()
 
-        # Allow holding again for the new piece
         self.can_hold = True
 
-        rows_cleared = self.grid.clear_full_rows()
-
-        if rows_cleared > 0:
+        if full_rows:
             self.clear_sound.play()
-            self.update_score(rows_cleared, 0)
-
-        if self.block_fits() == False:
-            self.game_over = True
+            self.grid.start_clear_animation(full_rows, tiles)
+        else:
+            if self.block_fits() == False:
+                self.game_over = True
 
     def reset_lock_delay(self):
         if self.is_grounded and self.lock_reset_count < self.max_lock_resets:
@@ -181,13 +179,11 @@ class Game:
 
     def hold_piece(self):
 
-        # Prevent holding multiple times per piece
         if self.can_hold == False:
             return
 
         self.can_hold = False
 
-        # If there is nothing in hold
         if self.held_block is None:
 
             self.held_block = self.current_block
@@ -196,7 +192,6 @@ class Game:
             self.next_block = self.get_random_block()
 
         else:
-            # Swap current and held pieces
             temp = self.current_block
             
             self.current_block = self.held_block
@@ -204,8 +199,6 @@ class Game:
             self.held_block = temp
             self.held_block.reset_position()
             
-
-        # Reset the new current piece
         self.current_block.reset_position()
         print(
             self.held_block.id,
@@ -264,6 +257,14 @@ class Game:
 
         self.update_effects()
 
+        if self.grid.is_clearing:
+            cleared = self.grid.update_clear_animation()
+            if cleared is not None:
+                self.update_score(cleared, 0)
+                if self.block_fits() == False:
+                    self.game_over = True
+            return
+        
         # Only run lock delay if touching the ground
         if self.is_grounded:
             self.lock_timer += dt
