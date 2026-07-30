@@ -115,6 +115,3 @@ class Input_Manager:
         self.actions.clear()
 
         return current_actions
-
-
-            

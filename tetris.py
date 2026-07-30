@@ -112,8 +112,3 @@ while True:
     game.update_effects()
     pygame.display.update()
     game.update(clock.tick(60))
-    
-
-
-
-
