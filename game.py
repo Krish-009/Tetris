@@ -1,6 +1,14 @@
 from grid import Grid
 from pathlib import Path
-from blockTypes import *
+from blockTypes import (
+    L_Block,
+    J_Block,
+    I_Block,
+    O_Block,
+    S_Block,
+    T_Block,
+    Z_Block
+)
 from hardDropEffect import HardDropEffect
 from srs import get_wall_kicks
 import random

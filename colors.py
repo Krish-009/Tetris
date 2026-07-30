@@ -13,7 +13,6 @@ class Colors:
 
     # Ghost Colors
     ghost_dark_grey = (40, 40, 40)
-
     ghost_green  = (30, 120, 30)
     ghost_red    = (150, 40, 40)
     ghost_orange = (180, 100, 20)
@@ -34,7 +33,8 @@ class Colors:
             cls.cyan, 
             cls.blue
         ]
-    
+
+    @classmethod
     def get_ghost_colors(cls):
         return [
             cls.ghost_dark_grey,

@@ -3,7 +3,7 @@ from position import Position
 
 class L_Block(Block):
     def __init__(self):
-        super().__init__(id = 1)
+        super().__init__(1)
         self.cells = {
             0: [Position(0, 2), Position(1, 0), Position(1, 1), Position(1, 2)],
             1: [Position(0, 1), Position(1, 1), Position(2, 1), Position(2, 2)],
@@ -14,7 +14,7 @@ class L_Block(Block):
 
 class J_Block(Block):
     def __init__(self):
-        super().__init__(id = 2)
+        super().__init__(2)
         self.cells = {
             0: [Position(0, 0), Position(1, 0), Position(1, 1), Position(1, 2)],
             1: [Position(0, 1), Position(0, 2), Position(1, 1), Position(2, 1)],
@@ -25,7 +25,7 @@ class J_Block(Block):
 
 class I_Block(Block):
     def __init__(self):
-        super().__init__(id = 3)
+        super().__init__(3)
         self.cells = {
             0: [Position(1, 0), Position(1, 1), Position(1, 2), Position(1, 3)],
             1: [Position(0, 2), Position(1, 2), Position(2, 2), Position(3, 2)],
@@ -36,7 +36,7 @@ class I_Block(Block):
 
 class O_Block(Block):
     def __init__(self):
-        super().__init__(id = 4)
+        super().__init__(4)
         self.cells = {
             0: [Position(0, 0), Position(0, 1), Position(1, 0), Position(1, 1)],
         }
@@ -44,7 +44,7 @@ class O_Block(Block):
 
 class S_Block(Block):
     def __init__(self):
-        super().__init__(id = 5)
+        super().__init__(5)
         self.cells = {
             0: [Position(0, 1), Position(0, 2), Position(1, 0), Position(1, 1)],
             1: [Position(0, 1), Position(1, 1), Position(1, 2), Position(2, 2)],
@@ -55,7 +55,7 @@ class S_Block(Block):
 
 class T_Block(Block):
     def __init__(self):
-        super().__init__(id = 6)
+        super().__init__(6)
         self.cells = {
             0: [Position(0, 1), Position(1, 0), Position(1, 1), Position(1, 2)],
             1: [Position(0, 1), Position(1, 1), Position(1, 2), Position(2, 1)],
@@ -66,7 +66,7 @@ class T_Block(Block):
 
 class Z_Block(Block):
     def __init__(self):
-        super().__init__(id = 7)
+        super().__init__(7)
         self.cells = {
             0: [Position(0, 0), Position(0, 1), Position(1, 1), Position(1, 2)],
             1: [Position(0, 2), Position(1, 1), Position(1, 2), Position(2, 1)],
