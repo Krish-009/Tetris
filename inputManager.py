@@ -1,114 +1,126 @@
 import pygame
-from enum import Enum
+from enum import Enum, auto
 
 class Action(Enum):
-    MOVE_LEFT = 1
-    MOVE_RIGHT = 2
-    SOFT_DROP = 3
-    ROTATE = 4
-    HARD_DROP = 5
-    HOLD = 6
-    PAUSE = 7
+    MOVE_LEFT = auto()
+    MOVE_RIGHT = auto()
+    SOFT_DROP = auto()
+    ROTATE = auto()
+    HARD_DROP = auto()
+    HOLD = auto()
+    PAUSE = auto()
 
 class Input_Manager:
+    DAS = 150
+    ARR = 40
+
     def __init__(self):
         self.left_held = False
         self.right_held = False
         self.down_held = False
 
-        self.das = 150
-        self.arr = 40
+        self.left_start = 0
+        self.right_start = 0
 
-        self.left_start_time = 0
-        self.right_start_time = 0
-
-        self.last_left_move = 0
-        self.last_right_move = 0
+        self.left_repeat = 0
+        self.right_repeat = 0
 
         self.actions = []
 
+    # ----------------
+    # Event Processing
+    # ----------------
     def process_event(self, event):
 
         if event.type == pygame.KEYDOWN:
-
-            # Left Movement
-            if event.key == pygame.K_LEFT:
-                self.left_held = True
-
-                self.actions.append(Action.MOVE_LEFT)
-
-                current_time = pygame.time.get_ticks()
-                self.left_start_time = current_time
-                self.last_left_move = current_time
-
-            # Right Movement
-            elif event.key == pygame.K_RIGHT:
-                self.right_held = True
-
-                self.actions.append(Action.MOVE_RIGHT)
-
-                current_time = pygame.time.get_ticks()
-                self.right_start_time = current_time
-                self.last_right_move = current_time
-
-            # Soft Drop
-            elif event.key == pygame.K_DOWN:
-                self.down_held = True
-
-            # Rotation
-            elif event.key == pygame.K_UP:
-                self.actions.append(Action.ROTATE)
-
-            # Hard Drop
-            elif event.key == pygame.K_SPACE:
-                self.actions.append(Action.HARD_DROP)
-
-            # Hold
-            elif event.key == pygame.K_c:
-                self.actions.append(Action.HOLD)
-
-            # Pause
-            elif event.key == pygame.K_ESCAPE:
-                self.actions.append(Action.PAUSE)
-
+            self.handle_keydown(event.key)
+        
         elif event.type == pygame.KEYUP:
+                self.handle_keyup(event.key)
 
-            if event.key == pygame.K_LEFT:
-                self.left_held = False
+    def handle_keydown(self, key):
+        now = pygame.time.get_ticks()
 
-            if event.key == pygame.K_RIGHT:
-                self.right_held = False
+        if key == pygame.K_LEFT:
+            self.left_held = True
+            self.left_start = now
+            self.left_repeat = now
+            self.actions.append(Action.MOVE_LEFT)
 
-            if event.key == pygame.K_DOWN:
-                self.down_held = False
+        elif key == pygame.K_RIGHT:
+            self.right_held = True
+            self.right_start = now
+            self.right_repeat = now
+            self.actions.append(Action.MOVE_RIGHT)
 
+        elif key == pygame.K_DOWN:
+            self.down_held = True
+
+        elif key == pygame.K_UP:
+            self.actions.append(Action.ROTATE)
+
+        elif key == pygame.K_SPACE:
+            self.actions.append(Action.HARD_DROP)
+
+        elif key == pygame.K_c:
+            self.actions.append(Action.HOLD)
+
+        elif key == pygame.K_ESCAPE:
+            self.actions.append(Action.PAUSE)
+
+    def handle_keyup(self, key):
+        if key == pygame.K_LEFT:
+            self.left_held = False
+
+        elif key == pygame.K_RIGHT:
+            self.right_held = False
+
+        elif key == pygame.K_DOWN:
+            self.down_held = False
+
+    # ---------
+    # DAS / ARR
+    # ---------
     def update(self):
-        current_time = pygame.time.get_ticks()
+        now = pygame.time.get_ticks()
 
-        # LEFT DAS/ARR
-        if self.left_held:
+        self.update_horizontal(
+            now,
+            held=self.left_held,
+            start=self.left_start,
+            last_repeat=self.left_repeat,
+            action=Action.MOVE_LEFT
+        )
 
-            # Wait for DAS
-            if current_time - self.left_start_time >= self.das:
+        self.update_horizontal(
+            now,
+            held=self.right_held,
+            start=self.right_start,
+            last_repeat=self.right_repeat,
+            action=Action.MOVE_RIGHT
+        )
 
-                # Move every ARR milliseconds
-                if current_time - self.last_left_move >= self.arr:
-                    self.actions.append(Action.MOVE_LEFT)
-                    self.last_left_move = current_time
-
-        # RIGHT DAS/ARR
-        if self.right_held:
-
-            if current_time - self.right_start_time >= self.das:
-
-                if current_time - self.last_right_move >= self.arr:
-                    self.actions.append(Action.MOVE_RIGHT)
-                    self.last_right_move = current_time
-
-        # Soft drop
         if self.down_held:
             self.actions.append(Action.SOFT_DROP)
 
+    def update_horizontal(self, now, held, start, last_repeat, action):
+        if not held:
+            return
+
+        if now - start < self.DAS:
+            return
+
+        if now - last_repeat >= self.ARR:
+            self.actions.append(action)
+
+            if action == Action.MOVE_LEFT:
+                self.left_repeat = now
+            else:
+                self.right_repeat = now
+
+    # -------
+    # Actions
+    # -------
     def get_actions(self):
         
         current_actions = self.actions.copy()

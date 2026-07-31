@@ -151,8 +151,8 @@ class Game:
             effect.update()
 
         self.hard_drop_effects = [
-            e for e in self.hard_drop_effects
-            if e.alive()
+            effect for effect in self.hard_drop_effects
+            if effect.alive
         ]
 
     def hard_drop(self):
