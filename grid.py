@@ -2,73 +2,100 @@ import pygame
 from colors import Colors
 
 class Grid:
+    NUM_ROWS = 20
+    NUM_COLS = 10
+    CELL_SIZE = 30
+    GRID_OFFSET = 11
+
+    FLASH_DURATION = 160
+    PEEL_STEP_DURATION = 35
+
     def __init__(self):
-        self.num_rows = 20
-        self.num_cols = 10
-        self.cell_size = 30
-        self.grid = [[0 for j in range(self.num_cols)] for i in range(self.num_rows)]
+        self.num_rows = self.NUM_ROWS
+        self.num_cols = self.NUM_COLS
+        self.cell_size = self.CELL_SIZE
+
+        self.grid = [
+            [0 for j in range(self.num_cols)] 
+            for i in range(self.num_rows)
+        ]
+
         self.colors = Colors.get_cell_colors()
 
+        # Line Clear Animation
         self.clearing_rows = []
         self.trigger_cols = {}
         self.is_clearing = False
         self.phase = None
         self.phase_timer = 0
-        self.flash_hold_duration = 160
-        self.peel_step_duration = 35
         self.peel_radius = 0
 
+    # -----
+    # Debug
+    # -----
     def print_grid(self):
-        for row in range(self.num_rows):
-            for col in range(self.num_cols):
-                print(self.grid[row][col], end=" ")
-            print()
+        for row in self.grid:
+            print(*row)
 
+    # -----------
+    # Cell Checks
+    # -----------
     def is_inside(self, row, col):
-        if row >= 0 and row < self.num_rows and col >= 0 and col < self.num_cols:
-            return True
-        return False
+        return(
+            0 <= row < self.num_rows 
+            and 0 <= col < self.num_cols
+        )
 
     def is_empty(self, row, col):
-        if self.grid[row][col] == 0:
-            return True
-        return False
+        return self.grid[row][col] == 0
 
     def is_row_full(self, row):
-        for col in range(self.num_cols):
-            if self.grid[row][col] == 0:
-                return False
-        return True
+        return all(cell != 0 for cell in self.grid[row])
 
+    # -----------------
+    # Grid modification
+    # -----------------
     def clear_row(self, row):
-        for col in range(self.num_cols):
-            self.grid[row][col] = 0
+        self.grid[row] = [0] * self.num_cols
 
-    def move_row_down(self, row, num_rows):
-        for col in range(self.num_cols):
-            self.grid[row + num_rows][col] = self.grid[row][col]
-            self.grid[row][col] = 0
+    def move_row_down(self, row, amount):
+        self.grid[row + amount] = self.grid[row]
+        self.clear_row(row)
 
+    def reset(self):
+        self.grid = [
+            [0 for _ in range(self.num_cols)]
+            for _ in range(self.num_rows)
+        ]
+
+    # -----------
+    # Row Helpers
+    # -----------
     def get_full_rows(self):
-        full_rows = []
-        for row in range(self.num_rows):
-            if self.is_row_full(row):
-                full_rows.append(row)
-        return full_rows
- 
+        return [
+            row
+            for row in range(self.num_rows)
+            if self.is_row_full(row)
+        ]
+
+    # --------------------
+    # Line Clear Animation
+    # --------------------
     def start_clear_animation(self, rows, trigger_tiles=None):
         self.clearing_rows = rows
         self.trigger_cols = {}
         for row in rows:
-            cols_in_row = []
             if trigger_tiles:
-                cols_in_row = [t.col for t in trigger_tiles if t.row == row]
- 
-            if cols_in_row:
-                cols_in_row.sort()
-                self.trigger_cols[row] = cols_in_row[len(cols_in_row) // 2]
-            else:
-                self.trigger_cols[row] = self.num_cols // 2
+                cols = sorted(
+                    tile.col
+                    for tile in trigger_tiles
+                    if tile.row == row
+                )
+
+                if cols:
+                    self.trigger_cols[row] = cols[len(cols) // 2]
+                    continue
+            self.trigger_cols[row] = self.num_cols // 2
  
         self.is_clearing = True
         self.phase = "flash"
@@ -82,62 +109,85 @@ class Grid:
         now = pygame.time.get_ticks()
 
         if self.phase == "flash":
-            if now - self.phase_timer >= self.flash_hold_duration:
+            if now - self.phase_timer >= self.FLASH_DURATION:
                 self.phase = "peel"
                 self.phase_timer = now
                 self.peel_radius = 0
             return None
         
-        max_distance = self.num_cols - 1
-        if now - self.phase_timer >= self.peel_step_duration:
+        max_radius = self.num_cols - 1
+
+        if now - self.phase_timer >= self.PEEL_STEP_DURATION:
             self.phase_timer = now
             self.peel_radius += 1
  
-            if self.peel_radius > max_distance:
+            if self.peel_radius > max_radius:
                 cleared = len(self.clearing_rows)
-                self._compact_after_clear(self.clearing_rows)
+
+                self.compact_after_clear()
+
                 self.is_clearing = False
-                self.clearing_rows = []
-                self.trigger_cols = {}
+                self.clearing_rows.clear()
+                self.trigger_cols.clear()
                 self.phase = None
+
                 return cleared
  
         return None
  
-    def _compact_after_clear(self, cleared_rows):
-        cleared_set = set(cleared_rows)
-        new_grid = [[0] * self.num_cols for _ in range(self.num_rows)]
+    def compact_after_clear(self):
+        cleared_set = set(self.clearing_rows)
+
+        new_grid = [
+            [0] * self.num_cols 
+            for _ in range(self.num_rows)
+        ]
+
         write_row = self.num_rows - 1
+
         for row in range(self.num_rows - 1, -1, -1):
             if row not in cleared_set:
                 new_grid[write_row] = self.grid[row]
                 write_row -= 1
+
         self.grid = new_grid
 
-    def reset(self):
-        for row in range(self.num_rows):
-            for col in range(self.num_cols):
-                self.grid[row][col] = 0
-
-
+    # -------
+    # Drawing
+    # -------
+    def draw_animation_cell(self, screen, row, col, rect):
+            if not self.is_clearing or row not in self.clearing_rows:
+                return False
+    
+            if self.phase == "flash":
+                pygame.draw.rect(screen, (255, 255, 255), rect)
+                return True
+    
+            trigger = self.trigger_cols[row]
+    
+            if abs(col - trigger) > self.peel_radius:
+                pygame.draw.rect(screen, (255, 255, 255), rect)
+    
+            return True
+    
     def draw(self, screen):
         for row in range(self.num_rows):
             for col in range(self.num_cols):
-                cell_value = self.grid[row][col]
-                cell_rect = pygame.Rect(
-                    col * self.cell_size + 11, 
-                    row * self.cell_size + 11, 
+
+                rect = pygame.Rect(
+                    col * self.cell_size + self.GRID_OFFSET, 
+                    row * self.cell_size + self.GRID_OFFSET, 
                     self.cell_size - 1, 
                     self.cell_size - 1
                 )
-                if self.is_clearing and row in self.clearing_rows:
-                    if self.phase == "flash":
-                        pygame.draw.rect(screen, (255, 255, 255), cell_rect)
-                    else:
-                        trigger_col = self.trigger_cols[row]
-                        if abs(col - trigger_col) <= self.peel_radius:
-                            pass
-                        else:
-                            pygame.draw.rect(screen, (255, 255, 255), cell_rect)
+
+                if self.draw_animation_cell(screen, row, col, rect):
                     continue
-                pygame.draw.rect(screen, self.colors[cell_value], cell_rect)
+
+                pygame.draw.rect(
+                    screen,
+                    self.colors[self.grid[row][col]],
+                    rect
+                )
+
+    

@@ -110,6 +110,7 @@ class Block:
     def draw(self, screen, offset_x, offset_y):
         self.draw_tiles(
             screen,
+            
             self.get_cell_positions(),
             offset_x,
             offset_y,
