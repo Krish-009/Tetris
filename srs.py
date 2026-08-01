@@ -26,12 +26,15 @@ I_KICKS = {
     (0,3): [(0,0), (-1,0), (2,0), (-1,2), (2,-1)]
 }
 
+KICK_TABLES = {
+    3: I_KICKS,
+    4: None,
+}
+
 def get_wall_kicks(block_id, old_state, new_state):
 
-    if block_id == 3:   # I piece
-        return I_KICKS[(old_state, new_state)]
+    if block_id == 4:
+        return [(0, 0)]
 
-    elif block_id == 4: # O piece
-        return [(0,0)]
-
-    return JLSTZ_KICKS[(old_state, new_state)]
+    table = KICK_TABLES.get(block_id, JLSTZ_KICKS)
+    return table[(old_state, new_state)]
